@@ -36,11 +36,11 @@ export function ProductCard (props: ProductCardProps) {
 
 const styles = StyleSheet.create({
     productCard: {
+        width: '48%',
         backgroundColor: mainStyles.mainColors.thirdColor,
         borderRadius: 10,
         padding: 10,
-        flex: 1,
-        marginHorizontal: 5
+        // marginHorizontal: 5
     },
     productCardCategoryContainer: {
         alignSelf: 'flex-start',
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
     productOldPrice: {
         color: 'gray',
         textDecorationLine: 'line-through',
+        fontSize: 12,
     },
     productNewPrice: {
         color: mainStyles.mainColors.primaryColor,

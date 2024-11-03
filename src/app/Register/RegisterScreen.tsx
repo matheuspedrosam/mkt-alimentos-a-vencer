@@ -94,7 +94,7 @@ export default function RegisterScreen (props: RegisterScreenProps) {
                     setError('');
                     cleandFields();
                     Alert.alert("Sucesso", "Usuário criado com sucesso!");
-                    setUser(userCredential.user);
+                    setUser({id: userCredential.user.uid, ...user});
                     if(userType == 'CLIENT'){
                         router.replace("Home/Client/ClientHomeScreen");
                     } else if(userType == 'RETAILER'){

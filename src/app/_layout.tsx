@@ -8,49 +8,29 @@ export default function Layout(){
 
   return (
     <Fragment>
-        <Stack>
+        <Stack
+            screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#ffffff' }, // Cor de fundo global para todas as telas do Stack
+            }}>
 
             {/* Index && NotAuth Routes */}
-            <Stack.Screen name='index' options={{
-                headerShown: false
-            }} />
-
-            <Stack.Screen name='Register/RegisterScreen' options={{
-                headerShown: false
-            }} />
-
-            <Stack.Screen name='Login/LoginScreen' options={{
-                headerShown: false
-            }} />
-
-            <Stack.Screen name='ForgotPassword/ForgotPasswordScreen' options={{
-                headerShown: false
-            }} />
+            <Stack.Screen name='index' />
+            <Stack.Screen name='Register/RegisterScreen' />
+            <Stack.Screen name='Login/LoginScreen' />
+            <Stack.Screen name='ForgotPassword/ForgotPasswordScreen' />
 
             {/* Auth Routes */}
             {/* Client */}
-            <Stack.Screen name='Home/Client/ClientHomeScreen' options={{
-                title: "Home | Cliente",
-                headerStyle: styles.mainHeader,
-                headerTitleStyle: {color: 'white'},
-            }} />
-
-            <Stack.Screen name='Product/ProductScreen' options={{
-                title: "Produto | Cliente",
-                headerStyle: styles.mainHeader,
-                headerTitleStyle: {color: 'white'},
-                headerTintColor: 'white'
-            }} />
+            <Stack.Screen name='Home/Client/ClientHomeScreen' />
+            <Stack.Screen name='Product/ProductScreen' />
 
             {/* Retailer */}
-            <Stack.Screen name='Home/Retailer/RetailerHomeScreen' options={{
-                title: "Home | Varejista",
-                headerStyle: styles.mainHeader,
-                headerTitleStyle: {color: 'white'}
-            }} />
-
+            <Stack.Screen name='Home/Retailer/RetailerHomeScreen' />
 
             {/* Both */}
+            <Stack.Screen name='Profile/ProfileScreen' />
+            <Stack.Screen name='EditProfile/EditProfileScreen' />
         </Stack>
     </Fragment>
   )

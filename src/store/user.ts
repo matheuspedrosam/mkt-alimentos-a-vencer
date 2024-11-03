@@ -1,5 +1,17 @@
 import { create } from 'zustand';
-import { User, UserCredential } from '@firebase/auth';
+
+type User = {
+  id: string,
+  userType?: string,
+  email?: string,
+  name?: string,
+  complement?: string,
+  createdAt?: number,
+  establishmentName?: string,
+  number?: string,
+  state?: string,
+  street?: string,
+}
 
 interface UserState {
   user: User | null;

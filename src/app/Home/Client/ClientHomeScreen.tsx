@@ -1,26 +1,26 @@
-import { View, Text, Button, StyleSheet, TextInput, Image, ScrollView, FlatList } from 'react-native'
+import { View, Text, Button, StyleSheet, TextInput, Image, ScrollView, FlatList, useWindowDimensions } from 'react-native'
 import { mainStyles } from '../../../utils/mainStyles';
 import { Icon } from '@rneui/base';
 import { ProductCard } from '../../../components/ProductCard';
 import { Fragment, useState } from 'react';
 import { CategoriesList } from '../../../components/CategoriesList';
+import { Header } from '../../../components/Header';
+import { ChangeLocation } from '../../../components/ChangeLocation';
+import Loader from '../../../components/Loader';
 
 interface ClientHomeScreenProps{
 }
 
 export default function ClientHomeScreen(props: ClientHomeScreenProps) {
     const [ category, setCategory ] = useState("Todos");
+    const { height } = useWindowDimensions();
 
     console.log(category);
 
     return (
-        <Fragment>
+        <View style={{height: height, backgroundColor: mainStyles.mainColors.background}}>
+            <Header />
             <ScrollView>
-                <View style={styles.changeLocationContainer}>
-                    <Icon name='location-on' color={'white'}/>
-                    <Text style={{color: 'white', fontWeight: 'bold'}}>Testeee, Maceió</Text>
-                    <Icon name='keyboard-arrow-down' color={'white'}/>
-                </View>
                 <View style={styles.container}>
                     <View style={styles.inputAndFilterContainer}>
                         <View style={styles.inputContainer}>
@@ -34,13 +34,16 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
                         <CategoriesList category={category} setCategory={setCategory}/>
                     </View>
                     <View style={styles.productsContainer}>
-                        <FlatList
-                            data={[1, 2, 3, 4, 5, 6]}
+                        {/* Verify If only 1 Problem... */}
+                        {/* <FlatList
+                            data={[1, 2]}
                             keyExtractor={(item) => item.toString()}
                             renderItem={({ item }) => (<ProductCard key={item} />)}
                             numColumns={2}
                             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                        />
+                        /> */}
+                        {/* <Loader /> */}
+                        {[1, 2, 3, 4, 5, 6].map((item) => <ProductCard key={item} />)}
                     </View>
                     <View style={styles.paginationContainer}>
                         <View style={styles.paginationComponent}>
@@ -59,26 +62,15 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
                     </View>
                 </View>
             </ScrollView>
-        </Fragment>
+            <ChangeLocation />
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
-    // Change Location
-    changeLocationContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 5,
-        gap: 10,
-        backgroundColor: '#BA2829'
-    },
-
     // Container
     container: {
         padding: 15,
-        backgroundColor: mainStyles.mainColors.background,
-        flex: 1
     },
 
     // Input And Filter
@@ -118,8 +110,12 @@ const styles = StyleSheet.create({
 
     // Products
     productsContainer: {
-        marginHorizontal: -5,
-        marginBottom: 20, 
+        marginHorizontal: -4,
+        gap: 10,
+        marginBottom: 20,
+        flexDirection: 'row',
+        flexWrap: 'wrap', // Permite quebrar para a próxima linha
+        justifyContent: 'center',
     },
 
     // Pagination

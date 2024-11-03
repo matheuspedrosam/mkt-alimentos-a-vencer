@@ -4,7 +4,6 @@ import { mainStyles } from '../../utils/mainStyles';
 import { useState } from 'react';
 import { Icon } from '@rneui/base';
 import { ChangeUserType } from '../../components/ChangeUserType';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import loginValidations from './loginValidations';
 import { auth, signInWithEmailAndPassword } from '../../firebase/config';
@@ -30,7 +29,6 @@ export default function LoginScreen (props: LoginScreenProps) {
 
     async function handleSubmitForm(e: any){
         e.preventDefault();
-
         setLoading(true);
 
         const user = { 
@@ -47,8 +45,9 @@ export default function LoginScreen (props: LoginScreenProps) {
                     setLoading(false);
                     setError('');
                     cleandFields();
+                    delete user.password;
                     Alert.alert("Sucesso", "Usuário logado com sucesso!");
-                    setUser(userCredential.user);
+                    setUser({id: userCredential.user.uid, ...user});
                     if(userType == 'CLIENT'){
                         router.replace("Home/Client/ClientHomeScreen");
                     } else if(userType == 'RETAILER'){
@@ -70,77 +69,77 @@ export default function LoginScreen (props: LoginScreenProps) {
     }
 
     return (
-        <GestureHandlerRootView>
-            <ScrollView>
-                <View style={styles.container}>
-                    {/* Logo */}
-                    <View style={{marginBottom: 40}}>
-                        <Logo logoHeight={100} logoWidth={100} titleFontSize={22} subTitleFontSize={12} circleSize={8}/>
-                    </View>
-
-                    {/* Title */}
-                    <Text style={styles.h1}>LOGIN</Text>
-
-                    {/* ChangeUserBtns */}
-                    <ChangeUserType userType={userType} setUserType={setUserType}/>
-
-                    {/* LoginForm */}
-                    <View style={[styles.form, error && {marginBottom: 50}]}>
-                        <View style={styles.inputsContainer}>
-                            <Icon name='email' color={mainStyles.mainColors.primaryColor}/>
-                            <TextInput
-                                style={styles.input} 
-                                placeholder='E-mail'
-                                placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                onChangeText={(text) => setEmail(text)}
-                                value={email}/>
-                        </View>
-                        <View style={styles.inputsContainer}>
-                            <Icon name='lock' color={mainStyles.mainColors.primaryColor}/>
-                            <TextInput
-                                secureTextEntry={true}
-                                style={styles.input}
-                                placeholder='Senha'
-                                placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                onChangeText={(text) => setPassword(text)}
-                                value={password}/>
-                        </View>
-
-                        {/* Forgot Password? */}
-                        <View style={styles.forgotPassword}>
-                            <Text style={{fontWeight: '500', fontSize: 16}}>Esqueceu a senha?</Text>
-                            <TouchableOpacity onPressIn={() => router.replace("/ForgotPassword/ForgotPasswordScreen")}>
-                                    <Text style={styles.forgotPasswordLink}>Clique aqui!</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
-                    {/* Error Messages */}
-                    {error && <Text style={styles.errorMessage}>Erro: {error}</Text>}
-
-                    {/* SubmitForm (Outside Form) */}
-                    {!loading && 
-                        <TouchableOpacity
-                            onPressIn={handleSubmitForm}
-                            style={styles.submitFormButton}>
-                                <Text style={styles.buttonsText}>ENTRAR</Text>
-                        </TouchableOpacity>
-                    }
-                    {loading && 
-                        <View
-                            style={[styles.submitFormButton, {backgroundColor: 'gray'}]}>
-                                <Text style={styles.buttonsText}>ENTRAR</Text>
-                        </View>
-                    }
-
-                    {/* RegisterButton */}
-                    <TouchableOpacity onPressIn={() => router.replace('Register/RegisterScreen')}
-                        style={styles.registerButton}>
-                            <Text style={[styles.buttonsText, {color: mainStyles.mainColors.primaryColor}]}>CADASTRE-SE</Text>
-                    </TouchableOpacity>
+        <ScrollView>
+            <View style={styles.container}>
+                {/* Logo */}
+                <View style={{marginBottom: 40}}>
+                    <Logo logoHeight={100} logoWidth={100} titleFontSize={22} subTitleFontSize={12} circleSize={8}/>
                 </View>
-            </ScrollView>
-        </GestureHandlerRootView>
+
+                {/* Title */}
+                <Text style={styles.h1}>LOGIN</Text>
+
+                {/* ChangeUserBtns */}
+                <ChangeUserType userType={userType} setUserType={setUserType}/>
+
+                {/* LoginForm */}
+                <View style={[styles.form, error && {marginBottom: 50}]}>
+                    <View style={styles.inputsContainer}>
+                        <Icon name='email' color={mainStyles.mainColors.primaryColor}/>
+                        <TextInput
+                            textContentType='emailAddress'
+                            style={styles.input} 
+                            placeholder='E-mail'
+                            placeholderTextColor={mainStyles.mainColors.primaryColor}
+                            onChangeText={(text) => setEmail(text)}
+                            value={email}/>
+                    </View>
+                    <View style={styles.inputsContainer}>
+                        <Icon name='lock' color={mainStyles.mainColors.primaryColor}/>
+                        <TextInput
+                            textContentType='password'
+                            secureTextEntry
+                            style={styles.input}
+                            placeholder='Senha'
+                            placeholderTextColor={mainStyles.mainColors.primaryColor}
+                            onChangeText={(text) => setPassword(text)}
+                            value={password}/>
+                    </View>
+
+                    {/* Forgot Password? */}
+                    <View style={styles.forgotPassword}>
+                        <Text style={{fontWeight: '500', fontSize: 16}}>Esqueceu a senha?</Text>
+                        <TouchableOpacity onPressIn={() => router.replace("/ForgotPassword/ForgotPasswordScreen")}>
+                                <Text style={styles.forgotPasswordLink}>Clique aqui!</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Error Messages */}
+                {error && <Text style={styles.errorMessage}>Erro: {error}</Text>}
+
+                {/* SubmitForm (Outside Form) */}
+                {!loading && 
+                    <TouchableOpacity
+                        onPressIn={handleSubmitForm}
+                        style={styles.submitFormButton}>
+                            <Text style={styles.buttonsText}>ENTRAR</Text>
+                    </TouchableOpacity>
+                }
+                {loading && 
+                    <View
+                        style={[styles.submitFormButton, {backgroundColor: 'gray'}]}>
+                            <Text style={styles.buttonsText}>ENTRAR</Text>
+                    </View>
+                }
+
+                {/* RegisterButton */}
+                <TouchableOpacity onPressIn={() => router.replace('Register/RegisterScreen')}
+                    style={styles.registerButton}>
+                        <Text style={[styles.buttonsText, {color: mainStyles.mainColors.primaryColor}]}>CADASTRE-SE</Text>
+                </TouchableOpacity>
+            </View>
+        </ScrollView>
     );
 }
 

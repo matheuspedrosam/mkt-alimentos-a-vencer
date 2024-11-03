@@ -15,7 +15,7 @@ export function Logo (props: LogoProps) {
     return (
         <View>
             <Image 
-                source={require('../../assets/logo.png')}
+                source={require('../../assets/red-logo.png')}
                 style={{width: logoWidth || 200, height: logoHeight || 200, margin: 'auto'}}/>
             <Text style={{fontSize: titleFontSize || 32, fontWeight: 'bold'}}>MKT ALIMENTOS</Text>
             <View style={styles.subtitleContainer}>

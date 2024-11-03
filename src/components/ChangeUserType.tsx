@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native';
 import { mainStyles } from '../utils/mainStyles';
 
 export interface ChangeUserTypeProps {
@@ -15,13 +15,13 @@ export function ChangeUserType (props: ChangeUserTypeProps) {
     return (
         <View style={[styles.changeUserButtonsContainer, style && style]}>
             <View style={[styles.changeUserButtons, userType === 'CLIENT' && styles.changeUserButtonsSelected]}>
-                <TouchableOpacity onPressIn={() => setUserType('CLIENT')}>
+                <TouchableOpacity onPress={() => setUserType('CLIENT')}>
                     <Text style={styles.buttonsText}>CLIENTE</Text>
                 </TouchableOpacity>
             </View>
 
             <View style={[styles.changeUserButtons, userType === 'RETAILER' && styles.changeUserButtonsSelected]}>
-                <TouchableOpacity onPressIn={() => setUserType('RETAILER')}>
+                <TouchableOpacity onPress={() => setUserType('RETAILER')}>
                     <Text style={styles.buttonsText}>VAREJISTA</Text>
                 </TouchableOpacity>
             </View>

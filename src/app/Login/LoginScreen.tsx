@@ -8,11 +8,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import loginValidations from './loginValidations';
 import { auth, signInWithEmailAndPassword } from '../../firebase/config';
+import useUserStore from '../../store/user';
 
 export interface LoginScreenProps {
 }
 
 export default function LoginScreen (props: LoginScreenProps) {
+    const { user, setUser } = useUserStore.getState();
+
     const [userType, setUserType] = useState('CLIENT');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -41,14 +44,16 @@ export default function LoginScreen (props: LoginScreenProps) {
 
             signInWithEmailAndPassword(auth, email, password)
                 .then(async (userCredential) => {
-                    const logedUser = userCredential.user;
-
                     setLoading(false);
                     setError('');
                     cleandFields();
                     Alert.alert("Sucesso", "Usuário logado com sucesso!");
-                    // Zustand...
-                    // router.replace("/home");
+                    setUser(userCredential.user);
+                    if(userType == 'CLIENT'){
+                        router.replace("Home/Client/ClientHomeScreen");
+                    } else if(userType == 'RETAILER'){
+                        router.replace("Home/Retailer/RetailerHomeScreen");
+                    }
                 })
                 .catch((error) => {
                     let errorMessage = error.message;

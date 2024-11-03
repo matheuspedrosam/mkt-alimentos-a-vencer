@@ -10,11 +10,14 @@ import { ChangeUserType } from '../../components/ChangeUserType';
 import { router } from 'expo-router';
 import registerValidations from './registerValidations';
 import { auth, createUserWithEmailAndPassword, db, doc, setDoc, Timestamp, updateProfile } from '../../firebase/config';
+import useUserStore from '../../store/user';
 
 export interface RegisterScreenProps {
 }
 
 export default function RegisterScreen (props: RegisterScreenProps) {
+    const { user, setUser } = useUserStore.getState();
+
     const [userType, setUserType] = useState('CLIENT');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -82,19 +85,21 @@ export default function RegisterScreen (props: RegisterScreenProps) {
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then(async (userCredential) => {
-                    const createdUser = userCredential.user;
-
                     delete user.password; delete user.confirmPassword;
 
-                    const userDocRef = doc(db, "users", createdUser.uid);
+                    const userDocRef = doc(db, "users", userCredential.user.uid);
                     
                     await setDoc(userDocRef, {...user, createdAt: Date.now()});
                     setLoading(false);
                     setError('');
                     cleandFields();
                     Alert.alert("Sucesso", "Usuário criado com sucesso!");
-                    // Zustand...
-                    // router.replace("/home");
+                    setUser(userCredential.user);
+                    if(userType == 'CLIENT'){
+                        router.replace("Home/Client/ClientHomeScreen");
+                    } else if(userType == 'RETAILER'){
+                        router.replace("Home/Retailer/RetailerHomeScreen");
+                    }
                 })
                 .catch((error) => {
                     let errorMessage = error.message;

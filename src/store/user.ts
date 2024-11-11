@@ -4,13 +4,17 @@ type User = {
   id: string,
   userType?: string,
   email?: string,
+  image?: string,
   name?: string,
   complement?: string,
   createdAt?: number,
   establishmentName?: string,
-  number?: string,
+  cep?: string,
   state?: string,
+  city?: string,
   street?: string,
+  number?: string,
+  neighborhood?: string,
 }
 
 interface UserState {

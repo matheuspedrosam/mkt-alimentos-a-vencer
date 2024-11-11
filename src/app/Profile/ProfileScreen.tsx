@@ -35,17 +35,19 @@ export default function ProfileScreen (props: ProfileScreenProps) {
                         <View style={styles.userPhotoContainer}>
                             <Image
                                 style={styles.userImg}
-                                source={require("../../../assets/userIcon.jpg")}/>
-                            <Text style={{fontWeight: 'bold', color: mainStyles.mainColors.primaryColor}}>UserName</Text>
+                                source={user.image ? {uri: user.image} : require("../../../assets/userIcon.jpg")}/>
+                            <Text style={{fontWeight: 'bold', color: mainStyles.mainColors.primaryColor}}>{user.name}</Text>
                         </View>
                         {user.userType == "RETAILER" &&
                             <View style={styles.userLocationContainer}>
                                 <View style={styles.userLocationTitleContainer}>
                                     <Icon name='location-on' color={mainStyles.mainColors.primaryColor}/>
-                                    <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Assaí Atacadista</Text>
+                                    <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>
+                                        {user.establishmentName || user.neighborhood}
+                                    </Text>
                                 </View>
                                 <Text style={styles.userLocationAdress}>
-                                    Menino Marcelo, s/n - Serraria, Maceió - AL, 57046-000
+                                    {user.street}, {user.number || 's/n'} - {user.neighborhood}, {user.city} - {user.state}, {user.cep}
                                 </Text>
                             </View>
                         }
@@ -55,7 +57,7 @@ export default function ProfileScreen (props: ProfileScreenProps) {
                                 <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>E-mail</Text>
                             </View>
                             <Text style={styles.userLocationAdress}>
-                                matheuspedrosa2002@gmail.com
+                                {user.email}
                             </Text>
                         </View>
                     </View>

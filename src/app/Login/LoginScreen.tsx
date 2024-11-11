@@ -6,8 +6,9 @@ import { Icon } from '@rneui/base';
 import { ChangeUserType } from '../../components/ChangeUserType';
 import { router } from 'expo-router';
 import loginValidations from './loginValidations';
-import { auth, signInWithEmailAndPassword } from '../../firebase/config';
+import { auth } from '../../firebase/config';
 import useUserStore from '../../store/user';
+import { signInWithEmailAndPassword } from '@firebase/auth';
 
 export interface LoginScreenProps {
 }
@@ -62,7 +63,7 @@ export default function LoginScreen (props: LoginScreenProps) {
                     setError(errorMessage);
                     setLoading(false);
                 });
-        }catch(e){
+        } catch(e){
             setError(e.message);
             setLoading(false);
         }

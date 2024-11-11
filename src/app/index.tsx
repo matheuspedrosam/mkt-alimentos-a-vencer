@@ -1,11 +1,11 @@
 import { View, StyleSheet } from 'react-native';
 import { Logo } from '../components/Logo';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { router } from 'expo-router';
-import { auth, db, doc } from '../firebase/config';
+import { auth, db } from '../firebase/config';
 import { onAuthStateChanged } from '@firebase/auth';
 import useUserStore from '../store/user';
-import { getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { mainStyles } from '../utils/mainStyles';
 import LottieView from 'lottie-react-native';
 

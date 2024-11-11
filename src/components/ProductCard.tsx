@@ -2,31 +2,45 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { mainStyles } from '../utils/mainStyles';
 import { Icon } from '@rneui/base';
 import { router } from 'expo-router';
+import textAbbr from '../utils/textAbbr';
 
 export interface ProductCardProps {
+    
 }
 
-export function ProductCard (props: ProductCardProps) {
+export function ProductCard (props: any) {
+    const { name, category, image, oldPrice, newPrice, retailer } = props.product;
+
+    function handleChangeScreen(){
+        router.push({
+            pathname: "Product/ProductScreen",
+            params: {product: JSON.stringify(props.product)}
+        });
+    }
+
     return (
         <View style={styles.productCard}>
-            <TouchableOpacity onPress={() => router.push("Product/ProductScreen")}>
+            <TouchableOpacity onPress={handleChangeScreen}>
                 <View style={styles.productCardCategoryContainer}>
                     <Icon name='category' size={16} color={mainStyles.mainColors.primaryColor}/>
-                    <Text style={{color: mainStyles.mainColors.primaryColor}}>Bebidas</Text>
+                    <Text style={{color: mainStyles.mainColors.primaryColor}}>{category}</Text>
                 </View>
                 <View style={styles.productCardImgContainer}>
-                    {/* <Image /> */}
-                    <Image style={{ width: '100%', height: '100%' }} source={{uri: 'https://s3-sa-east-1.amazonaws.com/rocky-2790b1b55c6f835a3de8629458121a7f/6a6c49bff8c6accd9fc587029190783d.png'}}/>
+                    <Image style={{ width: '100%', height: '100%' }} source={{uri: image}}/>
                 </View>
                 <View style={styles.productCardDescriptionsContainer}>
-                    <Text style={styles.productCardTitle}>Caixa Skol Latão</Text>
+                    <Text style={styles.productCardTitle}>
+                        {name.length > 12 ? textAbbr(name, 12) : name}
+                    </Text>
                     <View style={styles.productCardPriceContainer}>
-                        <Text style={styles.productOldPrice}>R$ 58,00</Text>
-                        <Text style={styles.productNewPrice}>R$ 42,00</Text>
+                        <Text style={styles.productOldPrice}>{oldPrice.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</Text>
+                        <Text style={styles.productNewPrice}>{newPrice.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</Text>
                     </View>
                     <View style={styles.productLocationContainer}>
                         <Icon name='location-on' color={mainStyles.mainColors.primaryColor}/>
-                        <Text style={{color: mainStyles.mainColors.primaryColor}}>Assaí Atacadista</Text>
+                        <Text style={{color: mainStyles.mainColors.primaryColor}}>
+                            { retailer.establishmentName || retailer.neighborhood }
+                        </Text>
                     </View>
                 </View>
             </TouchableOpacity>

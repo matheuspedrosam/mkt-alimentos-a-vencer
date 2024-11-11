@@ -9,8 +9,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ChangeUserType } from '../../components/ChangeUserType';
 import { router } from 'expo-router';
 import registerValidations from './registerValidations';
-import { auth, createUserWithEmailAndPassword, db, doc, setDoc, Timestamp, updateProfile } from '../../firebase/config';
+import { auth, db } from '../../firebase/config';
 import useUserStore from '../../store/user';
+import { createUserWithEmailAndPassword } from '@firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export interface RegisterScreenProps {
 }

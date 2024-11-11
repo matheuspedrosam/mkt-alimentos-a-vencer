@@ -3,12 +3,16 @@ import { View, Text, ScrollView, StyleSheet, Image, useWindowDimensions } from '
 import { mainStyles } from '../../utils/mainStyles';
 import { Fragment } from 'react';
 import { Header } from '../../components/Header';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import timestampToDate from '../../utils/timestampToDate';
 
 export interface ProductSreenProps {
 }
 
 export default function ProductSreen (props: ProductSreenProps) {
     const { height } = useWindowDimensions();
+    const productParam: any = useLocalSearchParams();
+    const { name, category, image, oldPrice, newPrice, validityDate, retailer } = JSON.parse(productParam.product);
 
     return (
         <Fragment>
@@ -17,36 +21,38 @@ export default function ProductSreen (props: ProductSreenProps) {
                 <View style={{minHeight: height - 100, backgroundColor: mainStyles.mainColors.background}}>
                     <View style={styles.productContainer}>
                         <View style={styles.productImgContainer}>
-                            <Image src='https://s3-sa-east-1.amazonaws.com/rocky-2790b1b55c6f835a3de8629458121a7f/6a6c49bff8c6accd9fc587029190783d.png' style={styles.productImg}/>
+                            <Image src={image} style={styles.productImg}/>
                         </View>
                     </View>
                     <View style={styles.productDescriptionContainer}>
                         <View style={styles.productCategoryAndValidateContainer}>
                             <View style={styles.productCategoryContainer}>
                                 <Icon name='category' size={16} color={mainStyles.mainColors.primaryColor}/>
-                                <Text style={{color: mainStyles.mainColors.primaryColor}}>Bebidas</Text>
+                                <Text style={{color: mainStyles.mainColors.primaryColor}}>{category}</Text>
                             </View>
                             <View style={styles.productValidateContainer}>
-                                <Text style={{color: 'white', fontWeight: 'bold'}}>VAL: {'20/10/2024'}</Text>
+                                <Text style={{color: 'white', fontWeight: 'bold'}}>VAL: {timestampToDate(validityDate)}</Text>
                             </View>
                         </View>
-                        <Text style={styles.productName}>Caixa Skol Latão 350ml</Text>
+                        <Text style={styles.productName}>{name}</Text>
                         <View style={styles.productLocationContainer}>
                             <View style={styles.productLocationTitleContainer}>
                                 <Icon name='location-on' color={mainStyles.mainColors.primaryColor}/>
-                                <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Assaí Atacadista</Text>
+                                <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>
+                                    { retailer.establishmentName || retailer.neighborhood }
+                                </Text>
                             </View>
                             <Text style={styles.productLocationAdress}>
-                                Menino Marcelo, s/n - Serraria, Maceió - AL, 57046-000
+                                {retailer.street}, {retailer.number || 's/n'} - {retailer.neighborhood}, {retailer.city} - {retailer.state}, {retailer.cep}
                             </Text>
                         </View>
                         <View style={styles.retailerNameContainer}>
                             <Icon name='account-circle' color={mainStyles.mainColors.primaryColor} />
-                            <Text style={styles.retailerName}>Nome do Varejista</Text>
+                            <Text style={styles.retailerName}>{retailer.name}</Text>
                         </View>
                         <View style={styles.productPriceContainer}>
-                            <Text style={styles.productOldPrice}>R$ 38,00</Text>
-                            <Text style={styles.productNewPrice}>R$ 42,00</Text>
+                            <Text style={styles.productOldPrice}>{oldPrice.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</Text>
+                            <Text style={styles.productNewPrice}>{newPrice.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</Text>
                         </View>
                     </View>
                 </View>

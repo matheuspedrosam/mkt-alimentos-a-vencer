@@ -7,7 +7,8 @@ import { ChangeUserType } from '../../components/ChangeUserType';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import forgotPasswordValidations from './forgotPasswordValidations';
-import { auth, sendPasswordResetEmail } from '../../firebase/config';
+import { auth } from '../../firebase/config';
+import { sendPasswordResetEmail } from '@firebase/auth';
 
 export interface ForgotPasswordScreenProps {
 }

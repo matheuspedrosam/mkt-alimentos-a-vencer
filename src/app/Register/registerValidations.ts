@@ -1,3 +1,5 @@
+import { GeoPoint } from "firebase/firestore";
+
 interface User {
     userType: string,
     name: string,
@@ -7,15 +9,17 @@ interface User {
     cep?: string,
     state?: string,
     city?: string,
+    neighborhood?: string,
     street?: string,
     number?: string,
     complement?: string,
     establishmentName?: string,
+    adressGeocode?: GeoPoint
 }
 
 export default function registerValidations(user: User){
     const {userType, name, email, password, confirmPassword} = user;
-    const {cep, state, city, street, number, complement, establishmentName} = user;
+    const {cep, state, city, neighborhood, street, number, complement, establishmentName} = user;
 
     // Client and Retailer
     if(!name || !email || !password || !confirmPassword) throw new Error('Todos os campos são obrigatórios.');
@@ -35,14 +39,14 @@ export default function registerValidations(user: User){
     if(userType === 'RETAILER'){
         if(!state) throw new Error('Escolha um estado.');
 
-        if(!cep || !city || !number || !street) throw new Error('Preencha os campos obrigatórios.');
+        if(!cep || !city || !neighborhood || !number || !street) throw new Error('Preencha os campos obrigatórios.');
 
         const cepRegex = /^[0-9]{5}-[0-9]{3}$/;
         if(!cepRegex.test(cep)) throw new Error('Formato correto de CEP: "12345-678".');
 
         if(number.length > 10) throw new Error('O Número não pode possuir mais de 10 caracteres.');
 
-        if(city.length > 150 || street.length > 150 || complement.length > 150 || establishmentName.length > 150) throw new Error('Os campos não podem conter mais de 150 caracteres.');
+        if(city.length > 150 || street.length > 150 || neighborhood.length > 150 || complement.length > 150 || establishmentName.length > 150) throw new Error('Os campos não podem conter mais de 150 caracteres.');
     }
 
     return;

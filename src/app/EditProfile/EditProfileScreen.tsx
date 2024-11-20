@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useReducer, useRef, useState } from 'react';
 import { View, Text, ScrollView, useWindowDimensions, TouchableOpacity, Image, StyleSheet, TextInput, Alert } from 'react-native';
 import { Header } from '../../components/Header';
 import { Icon } from '@rneui/base';
@@ -16,9 +16,10 @@ export interface EditProfileScreenProps {
 export default function EditProfileScreen (props: EditProfileScreenProps) {
     const { height } = useWindowDimensions();
     const { user, setUser } = useUserStore.getState();
-    const { setData } = useFetchData();
+    const { setData, updateData } = useFetchData();
 
     const [ name, setName ] = useState(user.name);
+    const [profilePhoto, setProfilePhoto] = useState(null);
     const [ blobImage, setBlobImage ] = useState(null);
 
     const [ loading, setLoading ] = useState(null);
@@ -26,96 +27,93 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
 
     async function handlePickProfilePhoto(){
         setLoading(true);
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,  
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
             quality: 0.8,
-        });
+          });
             
         if (!result.canceled) {
             const arquivo = await fetch(result.assets[0].uri);
             const arquivoBlob = await arquivo.blob();
-            await handleUpdateProfilePhoto(arquivoBlob);
+            setProfilePhoto(arquivoBlob)
         } else{
             setLoading(false);
         }
     }
 
-    async function handleUpdateProfilePhoto(arquivoBlob: any) {
+    async function handleUpdateProfile(){
         try{
-            const refImagem = ref(storage, arquivoBlob["_data"].name); 
-            const res = await uploadBytes(refImagem, arquivoBlob);
+            console.log(profilePhoto);
+            const refImagem = ref(storage, `${user.id}`); 
+            const res = await uploadBytes(refImagem, profilePhoto);
             console.log(res);
-            // const url = await getDownloadURL(refImagem);
-            // const userToUpdate = {
-            //     ...user,
-            //     image: url
-            // }
-            // await setData("users", userToUpdate);
-            // Alert.alert("Sucesso", "Foto atualizada.");
-            // setUser(userToUpdate);
-            // setLoading(false);
+            const url = await getDownloadURL(refImagem);
+            const userToUpdate = {
+                ...user,
+                image: url
+            }
+            await updateData("users", userToUpdate.id, userToUpdate);
+            Alert.alert("Sucesso", "Foto atualizada.");
+            setUser(userToUpdate);
+            setLoading(false);
         } catch (error) {
-            console.error("Erro ao atualizar foto de perfil:", error); // Verifique o erro completo
+            console.error("Erro ao atualizar foto de perfil:", error);
             Alert.alert("Erro", "Não foi possível atualizar a foto de perfil.");
         }
-    }
-
-    async function handleUpdateProfile(){
-        
     }
 
     return (
         <Fragment>
             <Header backHeader={true}/>
             <ScrollView>
-                <View style={{minHeight: height - 200, padding: 15, justifyContent: 'space-between'}}>
+                <View style={{minHeight: height - 300, padding: 15, justifyContent: 'space-between'}}>
                     <View style={styles.form}>
-                        <View>
-                            <View style={styles.userPhotoContainer}>
-                                <Image
-                                    style={styles.userImg}
-                                    source={user.image ? {uri: user.image} : require("../../../assets/userIcon.jpg")}/>
-                                <Icon name='edit' size={18} color='#3D3D3D' onPress={handlePickProfilePhoto}/>
-                            </View>
-                            {user.userType == "RETAILER" || user.userType == "CLIENT" &&
-                                <View>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder='NOME COMPLETO'
-                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                        onChangeText={(text) => setName(text)}
-                                        value={name}/>
-                                </View>
-                            }
-                            {user.userType == "RETAILER" &&
-                                <View>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder='RETAILER'
-                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                        onChangeText={(text) => setName(text)}
-                                        value={name}/>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder='RETAILER'
-                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                        onChangeText={(text) => setName(text)}
-                                        value={name}/>
-                                </View>
-                            }
+                        <Text style={{marginBottom: 20, fontSize: 24, fontWeight: 'bold'}}>Editar Perfil</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder='NOME COMPLETO'
+                            placeholderTextColor={mainStyles.mainColors.primaryColor}
+                            onChangeText={(text) => setName(text)}
+                            value={name}/>
+                        <TouchableOpacity style={styles.inputContainer} onPress={handlePickProfilePhoto}>
+                            <Icon name='image' color={mainStyles.mainColors.primaryColor}/>
+                            <Text style={{color: mainStyles.mainColors.primaryColor, marginLeft: 10}}>
+                                {profilePhoto ? profilePhoto["_data"].name : 'FOTO DE PERFIL'}
+                            </Text>
+                        </TouchableOpacity>
+                        <View style={[styles.input, {backgroundColor: 'rgb(240, 240, 240)', borderColor: 'gray'}]}>
+                            <Text style={{color: 'gray'}}>{user.email}</Text>
                         </View>
+                        {user.userType == "RETAILER" &&
+                            <Fragment>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='RETAILER'
+                                    placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                    onChangeText={(text) => setName(text)}
+                                    value={name}/>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='RETAILER'
+                                    placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                    onChangeText={(text) => setName(text)}
+                                    value={name}/>
+                            </Fragment>
+                        }
                     </View>
+                </View>
 
-                    <View style={styles.btnsContainer}>
-                        <TouchableOpacity 
-                            style={[styles.button, {backgroundColor: 'white'}]} 
-                            onPress={() => router.back()}>
-                            <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Cancelar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
-                            <Text style={{color: 'white', fontWeight: 'bold'}}>Salvar</Text>
-                        </TouchableOpacity>
-                    </View>
+                <View style={styles.btnsContainer}>
+                    <TouchableOpacity 
+                        style={[styles.button, {backgroundColor: 'white'}]} 
+                        onPress={() => router.back()}>
+                        <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Cancelar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
+                        <Text style={{color: 'white', fontWeight: 'bold'}}>Salvar</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
       </Fragment>
@@ -137,7 +135,19 @@ const styles = StyleSheet.create({
 
     // Form
     form: {
+        marginTop: 10,
         marginBottom: 100,
+    },
+    inputContainer: {
+        padding: 11,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: mainStyles.mainColors.primaryColor,
+        backgroundColor: mainStyles.mainColors.transparentColor,
+        flex: 1,
+        marginBottom: 10,
     },
     input: {
         backgroundColor: mainStyles.mainColors.transparentColor,

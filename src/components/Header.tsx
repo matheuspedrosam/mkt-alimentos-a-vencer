@@ -15,7 +15,7 @@ export function Header (props: HeaderProps) {
     const statusBarHeight = StatusBar.currentHeight
 
     return (
-        <View style={[styles.header, Platform.OS === 'android' ? {paddingTop: (10 + statusBarHeight)} : {paddingTop: (10 + insets.top)}]}>
+        <View style={[styles.header, Platform.OS === 'android' ? {paddingTop: (15 + statusBarHeight)} : {paddingTop: (5 + insets.top)}]}>
             {!backHeader &&
                 <Fragment>
                     <View style={styles.logoContainer}>

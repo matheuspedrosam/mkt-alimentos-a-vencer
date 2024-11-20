@@ -12,6 +12,8 @@ export default function Layout(){
             screenOptions={{
                 headerShown: false,
                 contentStyle: { backgroundColor: '#ffffff' }, // Cor de fundo global para todas as telas do Stack
+                statusBarTranslucent: true,
+                statusBarBackgroundColor: mainStyles.mainColors.primaryColor,
             }}>
 
             {/* Index && NotAuth Routes */}

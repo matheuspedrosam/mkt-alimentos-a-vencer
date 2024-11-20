@@ -1,4 +1,4 @@
-import { View, Text, Button, StyleSheet, TextInput, Image, ScrollView, FlatList, useWindowDimensions, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, FlatList, useWindowDimensions, TouchableOpacity, Alert, StatusBar } from 'react-native'
 import { mainStyles } from '../../../utils/mainStyles';
 import { Icon } from '@rneui/base';
 import { ProductCard } from '../../../components/ProductCard';
@@ -11,19 +11,29 @@ import useFetchData from '../../../hooks/useFetchData';
 import paginateArray from '../../../utils/paginateArray';
 import { Modalize } from 'react-native-modalize';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Slider from '@react-native-community/slider';
+import { Slider } from 'react-native-awesome-slider';
+import { useSharedValue } from 'react-native-reanimated';
+import orderArray from '../../../utils/orderAlg';
+import * as Location from 'expo-location';
+import GooglePlacesAutocomplete from '../../../components/GooglePlacesAutocomplete';
+import useUserStore from '../../../store/user';
+
 
 interface ClientHomeScreenProps{
 }
 
 export default function ClientHomeScreen(props: ClientHomeScreenProps) {
+    const { user, setUser } = useUserStore();
     const { height } = useWindowDimensions();
-    const { getData, getDataByQuery, setData } = useFetchData();
+    const { getData, getDataByQuery, filterDataByRadius, } = useFetchData();
+
+    const [location, setLocation] = useState(null);
 
     const [ entity, setEntity ] = useState(null);
     const [ displayEntity, setDisplayEntity ] = useState(null);
     const [ category, setCategory ] = useState("Todos");
     const [ searchConfings, setSearchConfigs ] = useState(null);
+    const [ selectedOrderBtn, setSelectedOrderBtn ] = useState(null);
     const [ filterConfigs, setFilterConfigs ] = useState(null);
     const [ orderConfigs, setOrderConfigs ] = useState(null);
 
@@ -35,34 +45,75 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
     const [ startDisplayPagination, setStartDisplayPagination ] = useState(0);
     const [ endDisplayPagination, setEndDisplayPagination ] = useState(2);
 
+    const [modalType, setModalType] = useState(null);
     const modalRef = useRef(null);
     const [ priceRange, setPriceRange ] = useState(0);
 
+    // PriceSlider
+    const progress = useSharedValue(0);
+    const min = useSharedValue(0);
+    const max = useSharedValue(1000);
+
+    async function getCurrentLocation() {
+        if(user.lastLocation){
+            setLocation(user.lastLocation);
+        } else{
+            setLocation({latitude: -9.6654638, longitude: -35.7109847, description: "Pajuçara, Maceió"}) // Default "Pajuçara, Maceió"
+        }
+
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            return;
+        }
+        
+        let deviceLocation = await Location.getCurrentPositionAsync({});
+        if(!deviceLocation){
+            return;
+        }
+
+        let deviceLocationNAME = await Location.reverseGeocodeAsync(location);
+        setLocation({
+            latitude: deviceLocation.coords.latitude,
+            longitude: deviceLocation.coords.longitude,
+            description: deviceLocationNAME
+        });
+    }
+      
     useEffect(() => {
         resetFilters();
+        if(!location){
+            getCurrentLocation();
+        }
         async function getProducts(){
             setLoading(true);
             let data: any;
-            if(category === "Todos"){
-                data = await getData("products");
-            } else{
-                data = await getDataByQuery("products", "category", "==", category);
-            }
+            data = await getData("products");
             if(data.length === 0){
                 setEntity(null);
                 setDisplayEntity(null);
                 setLoading(false);
                 return;
             }
-            const retailers: any = await getDataByQuery("users", "userType", "==", "RETAILER");
-            const products = mapProductsWithRetailers(data, retailers);
-            const paginatedProducts = paginateArray(products);
-            setEntity(products);
-            setDisplayEntity(paginatedProducts);
+            let retailers: any = await getDataByQuery("users", "userType", "==", "RETAILER");
+            
+            if(location){
+                retailers = filterDataByRadius(retailers, {latitude: location.latitude, longitude: location.longitude}, 50);
+                console.log(retailers);
+            }
+            let products: any;
+            if(retailers && retailers.length > 0){
+                products = mapProductsWithRetailers(data, retailers);
+                const paginatedProducts = paginateArray(products);
+                setEntity(products);
+                setDisplayEntity(paginatedProducts);
+            } else{
+                setEntity(null);
+                setDisplayEntity(null);
+            }
             setLoading(false);
         }
         getProducts();
-    }, [category, reload])
+    }, [reload, location])
 
     function resetFilters(){
         setEntity(null);
@@ -86,31 +137,27 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
           );
         }
 
-        // 2. Filtro
-        // if (filterConfigs) {
-        //     filteredData = filteredData.filter(item => item[filterConfigs.filter] === filterConfigs.condicao);
-        //     }
+        // 2. Category change
+        if (category && category != "Todos") {
+            filteredData = filteredData.filter(item => item.category.toLowerCase() === category.toLowerCase());
+        }
+
+        // 3. PriceRange
+        if (priceRange) {
+            filteredData = filteredData.filter(item => item.newPrice <= priceRange);
+        }
     
-        // 3. Ordenação
-        // if(orderConfigs){
-        //     filteredData = filteredData.sort((a, b) => {
-        //         if(Number(a[orderConfigs.orderField])){
-        //             return orderConfigs.orderDirection === 'asc' 
-        //                 ? Number(a[orderConfigs.orderField]) - Number(b[orderConfigs.orderField])
-        //                 : Number(b[orderConfigs.orderField]) - Number(a[orderConfigs.orderField])
-        //         } else if (typeof a[orderConfigs.orderField] === 'string') {
-        //             return orderConfigs.orderDirection === 'asc' 
-        //                 ? a[orderConfigs.orderField].localeCompare(b[orderConfigs.orderField])
-        //                 : b[orderConfigs.orderField].localeCompare(a[orderConfigs.orderField])
-        //         }
-        //     });
-        // }
+        // 4. Ordenação
+        if(orderConfigs){
+            filteredData = orderArray(filteredData, orderConfigs.orderField, orderConfigs.orderDirection);
+        }
+
         if(filteredData.length === 0){
             setDisplayEntity(null);
             return;
         }
         setDisplayEntity(paginateArray(filteredData));
-    }, [entity, searchConfings, filterConfigs, orderConfigs]);
+    }, [entity, searchConfings, category, orderConfigs, priceRange]);
 
     useEffect(() => {
         if(!entity) return;
@@ -149,8 +196,19 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
         }
     }
 
-    function handleOpenModal(){
+    function handleOpenFiltersModal(){
+        setModalType("filtersModal");
         modalRef.current.open();
+    }
+
+    function handleOpenChangeLocationModal(){
+        setModalType("locationModal");
+        modalRef.current.open();
+    }
+
+    function handleOrderByClick(btnId: string, orderField: string, orderDirection: string){
+        setSelectedOrderBtn(btnId);
+        setOrderConfigs({orderField, orderDirection});
     }
 
     return (
@@ -171,7 +229,7 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
                             name='filter-list' 
                             style={styles.filterIconBtn}
                             color={mainStyles.mainColors.primaryColor}
-                            onPress={handleOpenModal}/>
+                            onPress={handleOpenFiltersModal}/>
                     </View>
                     <View style={styles.categoriesContainer}>
                         <Text style={{fontWeight: 'bold'}}>Categorias</Text>
@@ -215,7 +273,7 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
             </ScrollView>
 
             {/* ChangeLocation */}
-            <ChangeLocation />
+            <ChangeLocation location={location} onClick={handleOpenChangeLocationModal}/>
 
             {/* Modal */}
             <Modalize
@@ -223,67 +281,67 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
                 ref={modalRef}
                 snapPoint={600}
             >
-                <View style={{padding: 30, paddingBottom: 60}}>
-                    <Text style={{fontWeight: 'bold', fontSize: 22, marginBottom: 20}}>Filtros</Text>
-                    <View style={{marginBottom: 20}}>
-                        <Text style={{marginBottom: 10, fontWeight: 'bold'}}>Limite de preço: R$ {priceRange},00</Text>
-                        <Slider
-                            style={{marginLeft: -5}}
-                            minimumValue={0}
-                            maximumValue={100}
-                            step={1}
-                            value={priceRange}
-                            onValueChange={(val) => setPriceRange(val)}
-                            minimumTrackTintColor={mainStyles.mainColors.primaryColor}
-                            maximumTrackTintColor="#d3d3d3"
-                            thumbTintColor={mainStyles.mainColors.primaryColor}
-                        />
+                {modalType === "filtersModal" && 
+                    <View style={{padding: 30, paddingBottom: 60}}>
+                        <Text style={{fontWeight: 'bold', fontSize: 22, marginBottom: 20}}>Filtros</Text>
+                        <View style={{marginBottom: 20}}>
+                            <Text style={{marginBottom: 10, fontWeight: 'bold'}}>Limite de preço: R$ {priceRange}</Text>
+                                <Slider
+                                    theme={{
+                                        disableMinTrackTintColor: '#fff',
+                                        maximumTrackTintColor: '#d3d3d3',
+                                        minimumTrackTintColor: mainStyles.mainColors.primaryColor,
+                                        cacheTrackTintColor: '#333',
+                                        bubbleBackgroundColor: '#666',
+                                        heartbeatColor: '#999',
+                                    }}
+                                    onSlidingComplete={(value) => setPriceRange(Number(value.toFixed(2)))}
+                                    progress={progress}
+                                    minimumValue={min}
+                                    maximumValue={max}
+                                />
+                        </View>
+                        <View style={{marginBottom: 30}}>
+                            <Text style={{marginBottom: 10, fontWeight: 'bold'}}>Ordernar por:</Text>
+                            {
+                                [
+                                    {id:'name-asc', title: 'Nome', field: 'name', order: 'asc', icon: 'sort'},
+                                    {id:'name-desc', title: 'Nome', field: 'name', order: 'desc', icon: 'sort'},
+                                    {id:'price-asc', title: 'Preço', field: 'newPrice', order: 'asc', icon: 'attach-money'},
+                                    {id:'price-desc', title: 'Preço', field: 'newPrice', order: 'desc', icon: 'attach-money'},
+                                    {id:'date-asc', title: 'Validade', field: 'validityDate', order: 'asc', icon: 'event'},
+                                    {id:'date-desc', title: 'Validade', field: 'validityDate', order: 'desc', icon: 'event'}
+                                
+                                ].map((orderBtn) => (
+                                    <TouchableOpacity
+                                        key={orderBtn.id} 
+                                        style={[styles.modalOrderBtn, selectedOrderBtn == orderBtn.id && styles.modalOrderBtnSelected]}
+                                        onPress={() => handleOrderByClick(orderBtn.id, orderBtn.field, orderBtn.order)}
+                                    >
+                                        <Icon name={orderBtn.icon} size={18}/>
+                                        <Text>{orderBtn.title}</Text>
+                                        <Icon name={orderBtn.order == "asc" ? 'arrow-upward' : 'arrow-downward'} size={18}/>
+                                    </TouchableOpacity>
+                                ))
+                            }
+                        </View>
+                        <View style={styles.modalBtnsContainer}>
+                            <TouchableOpacity 
+                                style={[styles.modalBtn]}
+                                onPress={() => modalRef.current.close()}
+                            >
+                                <Text style={{color: 'white'}}>Fechar</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    <View style={{marginBottom: 30}}>
-                        <Text style={{marginBottom: 10, fontWeight: 'bold'}}>Ordernar por:</Text>
-                        <TouchableOpacity style={[styles.modalOrderBtn, styles.modalOrderBtnSelected]}>
-                            <Icon name='attach-money' size={18}/>
-                            <Text>Preço</Text>
-                            <Icon name='arrow-upward' size={18}/>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalOrderBtn}>
-                            <Icon name='attach-money' size={18}/>
-                            <Text>Preço</Text>
-                            <Icon name='arrow-downward' size={18}/>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalOrderBtn}>
-                            <Icon name='near-me' size={18}/>
-                            <Text>Distancia</Text>
-                            <Icon name='arrow-upward' size={18}/>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalOrderBtn}>
-                            <Icon name='near-me' size={18}/>
-                            <Text>Distancia</Text>
-                            <Icon name='arrow-downward' size={18}/>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalOrderBtn}>
-                            <Icon name='trending-down' size={18}/>
-                            <Text>Desconto</Text>
-                            <Icon name='arrow-upward' size={18}/>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalOrderBtn}>
-                            <Icon name='trending-down' size={18}/>
-                            <Text>Desconto</Text>
-                            <Icon name='arrow-downward' size={18}/>
-                        </TouchableOpacity>
+                }
+
+                {modalType === "locationModal" && 
+                    <View style={{padding: 30, paddingBottom: 60}}>
+                        <Text style={{fontWeight: 'bold', marginBottom: 10}}>Trocar Localização:</Text>
+                        <GooglePlacesAutocomplete location={location} setLocation={setLocation} modalRef={modalRef} setLoading={setLoading} />
                     </View>
-                    <View style={styles.modalBtnsContainer}>
-                        <TouchableOpacity 
-                            style={[styles.modalBtn, {backgroundColor: 'white'}]}
-                            onPress={() => modalRef.current.close()}
-                        >
-                            <Text style={{color: mainStyles.mainColors.primaryColor}}>Cancelar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.modalBtn}>
-                            <Text style={{color: 'white'}}>Aplicar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                }
             </Modalize>
         </GestureHandlerRootView>
     )
@@ -396,7 +454,7 @@ const styles = StyleSheet.create({
     },
     modalBtn:{
         borderRadius: 4,
-        width: '47%',
+        width: '100%',
         backgroundColor: mainStyles.mainColors.primaryColor,
         padding: 10,
         display: 'flex',

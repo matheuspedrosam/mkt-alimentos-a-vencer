@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Image, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
 import { mainStyles } from '../../utils/mainStyles';
 import { Picker } from '@react-native-picker/picker';
@@ -12,7 +12,8 @@ import registerValidations from './registerValidations';
 import { auth, db } from '../../firebase/config';
 import useUserStore from '../../store/user';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, GeoPoint, setDoc } from 'firebase/firestore';
+import { API_KEY } from "@env";
 
 export interface RegisterScreenProps {
 }
@@ -26,7 +27,9 @@ export default function RegisterScreen (props: RegisterScreenProps) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [cep, setCep] = useState('');
+    const [cepLoading, setCepLoading] = useState(false);
     const [city, setCity] = useState('');
+    const [neighborhood, setNeighborhood] = useState('');
     const [street, setStreet] = useState('');
     const [number, setNumber] = useState('');
     const [complement, setComplement] = useState('');
@@ -57,8 +60,38 @@ export default function RegisterScreen (props: RegisterScreenProps) {
         setComplement('');
         setEstablishmentName('');
     }
+
+    async function handleCallViaCepAPI(){
+        if(!cep) return;
+
+        const cepRegex = /^[0-9]{5}-[0-9]{3}$/;
+        if(!cepRegex.test(cep)) {
+            setError("CEP inválido, formato esperado: xxxxx-xxx");
+            setNeighborhood(null);
+            setStreet(null);
+            setSelectedState(null);
+            setCity(null);
+            return;
+        } else{
+            setError(null);
+            setCepLoading(true);
+            try{
+                const res = await fetch(`https://viacep.com.br/ws/${cep.replace('-', '')}/json`)
+                const data = await res.json();
+                setNeighborhood(data.bairro);
+                setStreet(data.logradouro);
+                setSelectedState(data.uf);
+                setCity(data.localidade);
+            } catch(e){
+                console.log(e);
+            } finally{
+                setCepLoading(false);
+            }
+        }
+
+    }
     
-    function handleSubmitForm(e: any){
+    async function handleSubmitForm(e: any){
         e.preventDefault();
         setLoading(true);
 
@@ -70,20 +103,33 @@ export default function RegisterScreen (props: RegisterScreenProps) {
             confirmPassword,
             cep, 
             state: selectedState,
-            city, 
+            city,
+            neighborhood,
             street, 
             number, 
             complement, 
-            establishmentName
+            establishmentName,
+            adressGeocode: null
         }
 
         if(userType == 'CLIENT'){
             delete user.cep; delete user.state; delete user.city;
             delete user.street; delete user.number; delete user.complement; delete user.establishmentName;
+            delete user.neighborhood; delete user.adressGeocode;
         }
 
         try{
             registerValidations(user); // Validations
+
+            if(userType === "RETAILER"){
+                const address = `${user.street}, ${user.number}, ${user.neighborhood}, ${user.city}, ${user.state}, ${user.cep}`;
+                const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${API_KEY}`; 
+                const res = await fetch(url);
+                const geocode = await res.json();
+                const geometryLocation = geocode.results[0].geometry.location;
+                const { lat, lng } = geometryLocation;
+                user.adressGeocode = new GeoPoint(lat, lng);
+            }
 
             createUserWithEmailAndPassword(auth, email, password)
                 .then(async (userCredential) => {
@@ -182,6 +228,7 @@ export default function RegisterScreen (props: RegisterScreenProps) {
                                     placeholder='CEP'
                                     placeholderTextColor={mainStyles.mainColors.primaryColor}
                                     onChangeText={(text) => setCep(text)}
+                                    onEndEditing={handleCallViaCepAPI}
                                     value={cep}/>
                                 <View style={[styles.picker, styles.inputGrid]} onTouchEnd={openModal}>
                                     {Platform.OS === 'android' &&
@@ -210,7 +257,7 @@ export default function RegisterScreen (props: RegisterScreenProps) {
                                     placeholder='CIDADE'
                                     placeholderTextColor={mainStyles.mainColors.primaryColor}
                                     onChangeText={(text) => setCity(text)}
-                                    value={city}/>
+                                    value={cepLoading ? 'Aguarde...' : city}/>
                                 <TextInput
                                     style={[styles.input, styles.inputGrid]}
                                     placeholder='NÚMERO'
@@ -218,12 +265,18 @@ export default function RegisterScreen (props: RegisterScreenProps) {
                                     onChangeText={(text) => setNumber(text)}
                                     value={number}/>
                             </View>
+                            <TextInput 
+                                style={[styles.input, styles.inputGrid]}
+                                placeholder='BAIRRO'
+                                placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                onChangeText={(text) => setNeighborhood(text)}
+                                value={cepLoading ? 'Aguarde...' : neighborhood}/>
                             <TextInput
                                 style={styles.input}
                                 placeholder='RUA'
                                 placeholderTextColor={mainStyles.mainColors.primaryColor}
                                 onChangeText={(text) => setStreet(text)}
-                                value={street}/>
+                                value={cepLoading ? 'Aguarde...' : street}/>
                             <TextInput
                                 style={styles.input}
                                 placeholder='COMPLEMENTO'

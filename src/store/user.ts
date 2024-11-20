@@ -1,4 +1,7 @@
+import { GeoPoint } from 'firebase/firestore';
 import { create } from 'zustand';
+import { auth } from '../firebase/config';
+import { signOut } from '@firebase/auth';
 
 type User = {
   id: string,
@@ -12,9 +15,15 @@ type User = {
   cep?: string,
   state?: string,
   city?: string,
+  neighborhood?: string,
   street?: string,
   number?: string,
-  neighborhood?: string,
+  adressGeocode?: GeoPoint,
+  lastLocation?: {
+    latitude: number,
+    longitude: number,
+    description: string
+  }
 }
 
 interface UserState {
@@ -24,11 +33,18 @@ interface UserState {
 }
 
 const useUserStore = create<UserState>((set) => ({
-  user: null,
+    user: null,
 
-  setUser: (userData: User) => set({user: userData}),
+    setUser: (userData: User) => set({user: userData}),
 
-  logout: () => set({ user: null }),
+    logout: async () => {
+        try {
+            await signOut(auth);
+            set({ user: null });
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    },
 }));
 
 export default useUserStore;

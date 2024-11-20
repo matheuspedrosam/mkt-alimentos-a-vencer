@@ -1,5 +1,6 @@
 import { getDocs, collection, where, query, orderBy, updateDoc, addDoc, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../firebase/config'
+import calculateDistance from '../utils/calculeDistance';
 
 export default function useFetchData() {
 
@@ -18,6 +19,54 @@ export default function useFetchData() {
         const snapshot = await getDocs(q);
         const docsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         return docsList;
+    }
+
+    async function getDataByRadius(collectionName, center, radiusInKm) {
+        try {
+            const dataCollection = collection(db, collectionName);
+            const snapshot = await getDocs(dataCollection);
+
+            const filteredResults = snapshot.docs
+                .map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }))
+                .filter((doc) => {
+                    if (doc.addressGeoCode) {
+                        const { latitude, longitude } = doc.addressGeoCode;
+                        const distance = calculateDistance(
+                            center.latitude,
+                            center.longitude,
+                            latitude,
+                            longitude
+                        );
+                        return distance <= radiusInKm;
+                    }
+                    return false;
+                });
+            return filteredResults;
+        } catch (err) {
+            setError(err.message);
+            console.error("Erro ao buscar dados geoespaciais:", err);
+            return [];
+        }
+    }
+
+    function filterDataByRadius(data, center, radiusInKm){
+        const filteredResults = data.filter((doc) => {
+            if (doc.addressGeocode) {
+                const { latitude, longitude } = doc.addressGeocode;
+                const distance = calculateDistance(
+                    center.latitude,
+                    center.longitude,
+                    latitude,
+                    longitude
+                );
+                return distance <= radiusInKm;
+            }
+            return false;
+        });
+        return filteredResults;
     }
 
     async function getOrderedData(collectionName, orderField, orderDirection) {
@@ -86,5 +135,5 @@ export default function useFetchData() {
         }
     }
 
-    return { getData, getDataByQuery, getOrderedData, getQueryAndOrderedData, setData, updateData, deleteData }
+    return { getData, getDataByQuery, getDataByRadius, filterDataByRadius, getOrderedData, getQueryAndOrderedData, setData, updateData, deleteData }
 }

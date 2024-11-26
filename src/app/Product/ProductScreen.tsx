@@ -1,18 +1,26 @@
 import { Icon } from '@rneui/base';
 import { View, Text, ScrollView, StyleSheet, Image, useWindowDimensions } from 'react-native';
 import { mainStyles } from '../../utils/mainStyles';
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Header } from '../../components/Header';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import timestampToDate from '../../utils/timestampToDate';
+import useUserStore from '../../store/user';
 
 export interface ProductSreenProps {
 }
 
 export default function ProductSreen (props: ProductSreenProps) {
+    const { user } = useUserStore();
     const { height } = useWindowDimensions();
     const productParam: any = useLocalSearchParams();
-    const { name, category, image, oldPrice, newPrice, validityDate, retailer } = JSON.parse(productParam.product);
+    const { name, category, image, oldPrice, newPrice, validityDate } = JSON.parse(productParam.product);
+    let { retailer, retailerImage } = JSON.parse(productParam.product);
+
+    if(user.userType === "RETAILER"){
+        retailer = user;
+        retailerImage = user.image;
+    }
 
     return (
         <Fragment>
@@ -21,7 +29,7 @@ export default function ProductSreen (props: ProductSreenProps) {
                 <View style={{minHeight: height - 100, backgroundColor: mainStyles.mainColors.background}}>
                     <View style={styles.productContainer}>
                         <View style={styles.productImgContainer}>
-                            <Image src={image} style={styles.productImg}/>
+                            <Image source={{uri: image}} style={styles.productImg}/>
                         </View>
                     </View>
                     <View style={styles.productDescriptionContainer}>
@@ -47,7 +55,10 @@ export default function ProductSreen (props: ProductSreenProps) {
                             </Text>
                         </View>
                         <View style={styles.retailerNameContainer}>
-                            <Icon name='account-circle' color={mainStyles.mainColors.primaryColor} />
+                            {retailerImage
+                                ? (<Image source={{uri: retailerImage}} style={{width: 30, height: 30, borderRadius: 100, marginRight: 5}} />)
+                                : (<Icon name='account-circle' color={mainStyles.mainColors.primaryColor} />)
+                            }
                             <Text style={styles.retailerName}>{retailer.name}</Text>
                         </View>
                         <View style={styles.productPriceContainer}>

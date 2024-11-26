@@ -27,24 +27,3 @@ export const states = [
     { label: 'Sergipe', value: 'SE' },
     { label: 'Tocantins', value: 'TO' },
 ];
-
-export const categories = [
-    { name: "Todos" },
-    { name: "Bebidas" },
-    { name: "Massas" },
-    { name: "Frutas" },
-    { name: "Laticínios" },
-    { name: "Essenciais" },
-    { name: "Verduras e Legumes" },
-    { name: "Pães e Bolos" },
-    { name: "Congelados" },
-    { name: "Carnes" },
-    { name: "Comidas Prontas" },
-    { name: "Sobremesas" },
-    { name: "Lanches e Snacks" },
-    { name: "Grãos e Cereais" },
-    { name: "Produtos Orgânicos" },
-    { name: "Vegano" },
-    { name: "Vegetariano" },
-    { name: "Sem Glúten" },
-];

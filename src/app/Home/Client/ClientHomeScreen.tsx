@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, FlatList, useWindowDimensions, TouchableOpacity, Alert, StatusBar } from 'react-native'
+import { View, Text, StyleSheet, TextInput, ScrollView, useWindowDimensions, TouchableOpacity } from 'react-native'
 import { mainStyles } from '../../../utils/mainStyles';
 import { Icon } from '@rneui/base';
 import { ProductCard } from '../../../components/ProductCard';
@@ -98,7 +98,6 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
             
             if(location){
                 retailers = filterDataByRadius(retailers, {latitude: location.latitude, longitude: location.longitude}, 50);
-                console.log(retailers);
             }
             let products: any;
             if(retailers && retailers.length > 0){

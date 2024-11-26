@@ -29,6 +29,7 @@ export default function Layout(){
 
             {/* Retailer */}
             <Stack.Screen name='Home/Retailer/RetailerHomeScreen' />
+            <Stack.Screen name='RegisterProduct/RegisterProductScreen' />
 
             {/* Both */}
             <Stack.Screen name='Profile/ProfileScreen' />

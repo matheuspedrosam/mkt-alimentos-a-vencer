@@ -14,7 +14,7 @@ export function ProductCard (props: any) {
     function handleChangeScreen(){
         router.push({
             pathname: "Product/ProductScreen",
-            params: {product: JSON.stringify(props.product)}
+            params: {product: JSON.stringify({ ...props.product, image: encodeURIComponent(image), retailerImage: encodeURIComponent(retailer.image)})}
         });
     }
 

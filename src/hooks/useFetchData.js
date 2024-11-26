@@ -1,6 +1,7 @@
 import { getDocs, collection, where, query, orderBy, updateDoc, addDoc, doc, deleteDoc } from 'firebase/firestore'
-import { db } from '../firebase/config'
+import { db, storage } from '../firebase/config'
 import calculateDistance from '../utils/calculeDistance';
+import { deleteObject, ref } from 'firebase/storage';
 
 export default function useFetchData() {
 
@@ -135,5 +136,33 @@ export default function useFetchData() {
         }
     }
 
-    return { getData, getDataByQuery, getDataByRadius, filterDataByRadius, getOrderedData, getQueryAndOrderedData, setData, updateData, deleteData }
+    function extractFilePathFromURL(downloadURL) {
+        // Extraia o caminho do arquivo entre "/o/" e "?"
+        const regex = /\/o\/(.*?)\?/;
+        const match = downloadURL.match(regex);
+      
+        if (match && match[1]) {
+          // Decodifica o caminho URL-encoded
+          return decodeURIComponent(match[1]);
+        }
+      
+        throw new Error("Caminho do arquivo não encontrado na URL");
+    }
+
+    async function deleteImageByDownloadURL(downloadURL) {
+        try {
+            const filePath = extractFilePathFromURL(downloadURL);
+            const fileRef = ref(storage, filePath);
+        
+            await deleteObject(fileRef);
+            console.log("Imagem deletada com sucesso!");
+        } catch (error) {
+            console.error("Erro ao deletar a imagem:", error);
+            if (error.code === 'storage/object-not-found') {
+                console.log('O arquivo não foi encontrado.');
+            }
+        }
+    }
+
+    return { getData, getDataByQuery, getDataByRadius, filterDataByRadius, getOrderedData, getQueryAndOrderedData, setData, updateData, deleteData, deleteImageByDownloadURL }
 }

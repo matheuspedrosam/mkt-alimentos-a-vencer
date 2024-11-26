@@ -33,22 +33,29 @@ export default function FirstLoadingScreen (props: FirstLoadingScreenProps) {
     }
 
     function handleRedirectUser(){
-        onAuthStateChanged(auth, (userCredentials) => {
-            if (userCredentials) {
-                const docRef = doc(db, 'users', userCredentials.uid);
-                getDoc(docRef).then((docSnap) => {
-                    const user = docSnap.data();
-                    setUser({id: userCredentials.uid, ...user});
-                    if(docSnap.data().userType == 'CLIENT'){
-                        router.replace("Home/Client/ClientHomeScreen");
-                    } else if(docSnap.data().userType == 'RETAILER'){
-                        router.replace("Home/Retailer/RetailerHomeScreen");
-                    }
-                })
-            } else {
-                router.replace('/Login/LoginScreen');
-            }
-        })
+        try{
+            onAuthStateChanged(auth, (userCredentials) => {
+                if (userCredentials) {
+                    const docRef = doc(db, 'users', userCredentials.uid);
+                    getDoc(docRef).then((docSnap) => {
+                        const user = docSnap.data();
+                        setUser({id: userCredentials.uid, ...user});
+                        if(docSnap.data().userType == 'CLIENT'){
+                            router.replace("Home/Client/ClientHomeScreen");
+                        } else if(docSnap.data().userType == 'RETAILER'){
+                            router.replace("Home/Retailer/RetailerHomeScreen");
+                        }
+                    })
+                } else {
+                    router.replace('/Login/LoginScreen');
+                }
+            })
+        } catch (e){
+            console.log(e);
+            router.replace('/Login/LoginScreen');
+        } finally {
+            // router.replace('/Login/LoginScreen');
+        }
     }
 
     return (

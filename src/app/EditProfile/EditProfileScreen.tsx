@@ -1,5 +1,5 @@
 import { Fragment, useReducer, useRef, useState } from 'react';
-import { View, Text, ScrollView, useWindowDimensions, TouchableOpacity, Image, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, useWindowDimensions, TouchableOpacity, Image, StyleSheet, TextInput, Alert, Platform } from 'react-native';
 import { Header } from '../../components/Header';
 import { Icon } from '@rneui/base';
 import useUserStore from '../../store/user';
@@ -7,8 +7,15 @@ import { mainStyles } from '../../utils/mainStyles';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { storage } from '../../firebase/config';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { getDownloadURL, ref, uploadBytes, uploadBytesResumable, uploadString } from 'firebase/storage';
 import useFetchData from '../../hooks/useFetchData';
+import validateUser from './userValidations';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Modalize } from 'react-native-modalize';
+import { Picker } from '@react-native-picker/picker';
+import { states } from '../../db/mockedDb';
+import { GeoPoint } from 'firebase/firestore';
+import { API_KEY } from '@env';
 
 export interface EditProfileScreenProps {
 }
@@ -16,56 +23,183 @@ export interface EditProfileScreenProps {
 export default function EditProfileScreen (props: EditProfileScreenProps) {
     const { height } = useWindowDimensions();
     const { user, setUser } = useUserStore.getState();
-    const { setData, updateData } = useFetchData();
+    const { updateData } = useFetchData();
 
-    const [ name, setName ] = useState(user.name);
-    const [profilePhoto, setProfilePhoto] = useState(null);
-    const [ blobImage, setBlobImage ] = useState(null);
+    const [name, setName] = useState(user.name);
+    const [profilePhoto, setProfilePhoto] = useState<string | Blob>(user.image);
+    const [cep, setCep] = useState('');
+    const [cepLoading, setCepLoading] = useState(false);
+    const [city, setCity] = useState('');
+    const [neighborhood, setNeighborhood] = useState('');
+    const [street, setStreet] = useState('');
+    const [number, setNumber] = useState('');
+    const [complement, setComplement] = useState('');
+    const [establishmentName, setEstablishmentName] = useState('');
+    const [selectedState, setSelectedState] = useState('');
 
     const [ loading, setLoading ] = useState(null);
     const [ error, setError ] = useState(null);
 
-    async function handlePickProfilePhoto(){
-        setLoading(true);
+    const modalRef = useRef<Modalize>(null);
+            
+    function openModal(e: any){
+        if(Platform.OS === 'ios'){
+            modalRef.current?.open();
+        }
+    };
+
+    const showOptions = () => {
+        Alert.alert(
+          "Selecione uma opção",
+          "Escolha entre tirar uma foto ou selecionar da galeria",
+          [
+              { text: "Cancelar", style: "cancel" },
+              { text: "Galeria", onPress: handlePickImage },
+              { text: "Câmera", onPress: handleTakePhoto },
+          ]
+        );
+      };
+
+    async function handlePickImage(){
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (!permissionResult.granted) {
+            alert("Permissão para acessar a galeria é necessária!");
+            return;
+        }
+
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
-            aspect: [4, 3],
+            aspect: [1, 1],
             quality: 0.8,
+            allowsMultipleSelection: false
           });
             
         if (!result.canceled) {
             const arquivo = await fetch(result.assets[0].uri);
-            const arquivoBlob = await arquivo.blob();
-            setProfilePhoto(arquivoBlob)
+            const arquivoBlob: any = await arquivo.blob();
+            setProfilePhoto(arquivoBlob);
+        }
+    }
+
+    async function handleTakePhoto(){
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+        if (!permissionResult.granted) {
+            alert("Permissão para acessar a câmera é necessária!");
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+            allowsMultipleSelection: false
+          });
+            
+        if (!result.canceled) {
+            const arquivo = await fetch(result.assets[0].uri);
+            const arquivoBlob: any = await arquivo.blob();
+            setProfilePhoto(arquivoBlob);
+        }
+    }
+
+    async function handleCallViaCepAPI(){
+        if(!cep) return;
+
+        const cepRegex = /^[0-9]{5}-[0-9]{3}$/;
+        if(!cepRegex.test(cep)) {
+            setError("CEP inválido, formato esperado: xxxxx-xxx");
+            setNeighborhood(null);
+            setStreet(null);
+            setSelectedState(null);
+            setCity(null);
+            return;
         } else{
-            setLoading(false);
+            setError(null);
+            setCepLoading(true);
+            try{
+                const res = await fetch(`https://viacep.com.br/ws/${cep.replace('-', '')}/json`)
+                const data = await res.json();
+                setNeighborhood(data.bairro);
+                setStreet(data.logradouro);
+                setSelectedState(data.uf);
+                setCity(data.localidade);
+            } catch(e){
+                console.log(e);
+            } finally{
+                setCepLoading(false);
+            }
         }
     }
 
     async function handleUpdateProfile(){
+        setLoading(true);
+
         try{
-            console.log(profilePhoto);
-            const refImagem = ref(storage, `${user.id}`); 
-            const res = await uploadBytes(refImagem, profilePhoto);
-            console.log(res);
-            const url = await getDownloadURL(refImagem);
-            const userToUpdate = {
-                ...user,
-                image: url
+            validateUser({name, cep, state: selectedState, city, neighborhood, street, number, complement, establishmentName});
+        } catch (e){
+            console.log(e);
+            setLoading(false);
+            setError(e.message);
+            return;
+        }
+        setError(null);
+
+        try{
+            let url: any = null;
+            if(profilePhoto && typeof profilePhoto != "string"){
+                const refImagem = ref(storage, `profilePhotos/${user.id}`);
+                const res = await uploadBytes(refImagem, profilePhoto);
+                url = await getDownloadURL(refImagem);
+            }
+            let userToUpdate: any;
+            if(user.userType === "CLIENT"){
+                userToUpdate = {
+                    ...user,
+                    name,
+                    image: url ? url : profilePhoto
+                }
+            } else if (user.userType === "RETAILER"){
+                userToUpdate = {
+                    ...user,
+                    name,
+                    image: url ? url : profilePhoto,
+                    cep, 
+                    state: selectedState,
+                    city,
+                    neighborhood,
+                    street, 
+                    number, 
+                    complement, 
+                    establishmentName,
+                    adressGeocode: null
+                }
+
+                const address = `${user.street}, ${user.number}, ${user.neighborhood}, ${user.city}, ${user.state}, ${user.cep}`;
+                const geoCodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${API_KEY}`; 
+                const res = await fetch(geoCodeUrl);
+                const geocode = await res.json();
+                const geometryLocation = geocode.results[0].geometry.location;
+                const { lat, lng } = geometryLocation;
+                userToUpdate.adressGeocode = new GeoPoint(lat, lng);
             }
             await updateData("users", userToUpdate.id, userToUpdate);
-            Alert.alert("Sucesso", "Foto atualizada.");
+            Alert.alert("Sucesso", "Perfil atualizado.");
             setUser(userToUpdate);
-            setLoading(false);
+            router.replace(user.userType === "CLIENT" ? "Home/Client/ClientHomeScreen" : "Home/Retailer/RetailerHomeScreen");
         } catch (error) {
-            console.error("Erro ao atualizar foto de perfil:", error);
-            Alert.alert("Erro", "Não foi possível atualizar a foto de perfil.");
+            console.error("Erro ao atualizar perfil:", JSON.stringify(error));
+            Alert.alert("Erro", "Não foi possível atualizar o perfil.");
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
-        <Fragment>
+        <GestureHandlerRootView>
             <Header backHeader={true}/>
             <ScrollView>
                 <View style={{minHeight: height - 300, padding: 15, justifyContent: 'space-between'}}>
@@ -77,10 +211,14 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
                             placeholderTextColor={mainStyles.mainColors.primaryColor}
                             onChangeText={(text) => setName(text)}
                             value={name}/>
-                        <TouchableOpacity style={styles.inputContainer} onPress={handlePickProfilePhoto}>
+                        <TouchableOpacity style={styles.inputContainer} onPress={showOptions}>
                             <Icon name='image' color={mainStyles.mainColors.primaryColor}/>
                             <Text style={{color: mainStyles.mainColors.primaryColor, marginLeft: 10}}>
-                                {profilePhoto ? profilePhoto["_data"].name : 'FOTO DE PERFIL'}
+                                {[1].map((value) => {
+                                    if(!profilePhoto) return 'FOTO DE PERFIL';
+
+                                    return typeof profilePhoto == "string" ? `${profilePhoto.slice(0, 40)}...` : profilePhoto["_data"].name
+                                })}
                             </Text>
                         </TouchableOpacity>
                         <View style={[styles.input, {backgroundColor: 'rgb(240, 240, 240)', borderColor: 'gray'}]}>
@@ -88,35 +226,125 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
                         </View>
                         {user.userType == "RETAILER" &&
                             <Fragment>
+                                <View style={styles.inputGridContainer}>
+                                    <TextInput
+                                        style={[styles.input, styles.inputGrid]}
+                                        placeholder='CEP'
+                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                        onChangeText={(text) => setCep(text)}
+                                        onEndEditing={handleCallViaCepAPI}
+                                        value={cep}/>
+                                    <View style={[styles.picker, styles.inputGrid]} onTouchEnd={openModal}>
+                                        {Platform.OS === 'android' &&
+                                            <Picker
+                                                selectedValue={selectedState}
+                                                onValueChange={(itemValue) => setSelectedState(itemValue)}
+                                            >
+                                                <Picker.Item label="Estado" value="" />
+                                                {states.map((state) => (
+                                                    <Picker.Item key={state.value} label={state.label} value={state.value} />
+                                                ))}
+                                            </Picker>
+                                        }
+                                        {Platform.OS === 'ios' &&
+                                            <View
+                                                style={{height: 45, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                                <Text>{selectedState || 'Estado'}</Text>
+                                                <Icon name='arrow-drop-down'/>
+                                            </View>
+                                        }
+                                    </View>
+                                </View>
+                                <View style={styles.inputGridContainer}>
+                                    <TextInput
+                                        style={[styles.input, styles.inputGrid]}
+                                        placeholder='CIDADE'
+                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                        onChangeText={(text) => setCity(text)}
+                                        value={cepLoading ? 'Aguarde...' : city}/>
+                                    <TextInput
+                                        style={[styles.input, styles.inputGrid]}
+                                        placeholder='NÚMERO'
+                                        placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                        onChangeText={(text) => setNumber(text)}
+                                        value={number}/>
+                                </View>
+                                <TextInput 
+                                    style={[styles.input, styles.inputGrid]}
+                                    placeholder='BAIRRO'
+                                    placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                    onChangeText={(text) => setNeighborhood(text)}
+                                    value={cepLoading ? 'Aguarde...' : neighborhood}/>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder='RETAILER'
+                                    placeholder='RUA'
                                     placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                    onChangeText={(text) => setName(text)}
-                                    value={name}/>
+                                    onChangeText={(text) => setStreet(text)}
+                                    value={cepLoading ? 'Aguarde...' : street}/>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder='RETAILER'
+                                    placeholder='COMPLEMENTO'
                                     placeholderTextColor={mainStyles.mainColors.primaryColor}
-                                    onChangeText={(text) => setName(text)}
-                                    value={name}/>
+                                    onChangeText={(text) => setComplement(text)}
+                                    value={complement}/>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder='NOME DO ESTABELECIMENTO'
+                                    placeholderTextColor={mainStyles.mainColors.primaryColor}
+                                    onChangeText={(text) => setEstablishmentName(text)}
+                                    value={establishmentName}/>
                             </Fragment>
                         }
+
+                        {error && <Text style={styles.errorMessage}>Erro: {error}</Text>}
                     </View>
                 </View>
 
                 <View style={styles.btnsContainer}>
-                    <TouchableOpacity 
-                        style={[styles.button, {backgroundColor: 'white'}]} 
-                        onPress={() => router.back()}>
-                        <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Cancelar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
-                        <Text style={{color: 'white', fontWeight: 'bold'}}>Salvar</Text>
-                    </TouchableOpacity>
+                    {!loading && 
+                        <Fragment>
+                            <TouchableOpacity
+                                style={[styles.button, {backgroundColor: 'white'}]}
+                                onPress={() => router.back()}>
+                                <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Cancelar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
+                                <Text style={{color: 'white', fontWeight: 'bold'}}>Salvar</Text>
+                            </TouchableOpacity>
+                        </Fragment>
+                    }
+                    {loading && 
+                        <Fragment>
+                            <TouchableOpacity
+                                style={[styles.button, {backgroundColor: 'white'}]}
+                                onPress={() => router.back()}>
+                                <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>Aguarde...</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.button, {backgroundColor: 'gray', borderColor: 'gray'}]}>
+                                <Text style={{color: 'white', fontWeight: 'bold'}}>Aguarde...</Text>
+                            </TouchableOpacity>
+                        </Fragment>
+                    }
                 </View>
             </ScrollView>
-      </Fragment>
+
+            {/* Modal */}
+            <Modalize 
+                ref={modalRef} 
+                snapPoint={200}
+                modalHeight={200}>
+                    <Picker
+                        style={{height: 200}}
+                        selectedValue={selectedState}
+                        onValueChange={(itemValue) => setSelectedState(itemValue)}
+                    >
+                        <Picker.Item label="Estado" value="" />
+                        {states.map((state) => (
+                            <Picker.Item key={state.value} label={state.label} value={state.value} />
+                        ))}
+                </Picker>
+            </Modalize>
+      </GestureHandlerRootView>
     )
 }
 
@@ -157,6 +385,29 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         textDecorationColor: mainStyles.mainColors.primaryColor,
         marginBottom: 10
+    },
+    inputGridContainer: {
+        flexDirection: 'row',
+        gap: 10
+    },
+    inputGrid: {
+        flex: 1
+    },
+    picker: {
+        backgroundColor: mainStyles.mainColors.transparentColor,
+        borderRadius: 5,
+        borderColor: mainStyles.mainColors.primaryColor,
+        borderWidth: 1,
+        textDecorationColor: mainStyles.mainColors.primaryColor,
+        marginBottom: 10,
+        paddingVertical: 0,
+        paddingHorizontal: 15
+    },
+
+    errorMessage:{
+        textAlign: 'center',
+        color: mainStyles.mainColors.primaryColor,
+        marginTop: 10,
     },
 
     // btnsContainer

@@ -5,8 +5,6 @@ export const mainStyles = {
         secondaryColor: '#FF8D8E',
         thirdColor: '#FFEBEB',
         transparentColor: '#FFDFDF'
-        
-        
     },
     mainFont: 'Inter, Sans-serif'
 }

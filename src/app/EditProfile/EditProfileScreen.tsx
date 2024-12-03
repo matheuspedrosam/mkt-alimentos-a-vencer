@@ -27,15 +27,15 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
 
     const [name, setName] = useState(user.name);
     const [profilePhoto, setProfilePhoto] = useState<string | Blob>(user.image);
-    const [cep, setCep] = useState('');
+    const [cep, setCep] = useState(user.cep);
     const [cepLoading, setCepLoading] = useState(false);
-    const [city, setCity] = useState('');
-    const [neighborhood, setNeighborhood] = useState('');
-    const [street, setStreet] = useState('');
-    const [number, setNumber] = useState('');
-    const [complement, setComplement] = useState('');
-    const [establishmentName, setEstablishmentName] = useState('');
-    const [selectedState, setSelectedState] = useState('');
+    const [city, setCity] = useState(user.city);
+    const [neighborhood, setNeighborhood] = useState(user.neighborhood);
+    const [street, setStreet] = useState(user.street);
+    const [number, setNumber] = useState(user.number);
+    const [complement, setComplement] = useState(user.complement);
+    const [establishmentName, setEstablishmentName] = useState(user.establishmentName);
+    const [selectedState, setSelectedState] = useState(user.state);
 
     const [ loading, setLoading ] = useState(null);
     const [ error, setError ] = useState(null);
@@ -139,7 +139,7 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
         setLoading(true);
 
         try{
-            validateUser({name, cep, state: selectedState, city, neighborhood, street, number, complement, establishmentName});
+            validateUser({userType: user.userType, name, cep, state: selectedState, city, neighborhood, street, number, complement, establishmentName});
         } catch (e){
             console.log(e);
             setLoading(false);
@@ -203,7 +203,7 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
             <Header backHeader={true}/>
             <ScrollView>
                 <View style={{minHeight: height - 300, padding: 15, justifyContent: 'space-between'}}>
-                    <View style={styles.form}>
+                    <View style={[styles.form, {marginBottom: (user.userType === "RETAILER" ? 20 : 100)}]}>
                         <Text style={{marginBottom: 20, fontSize: 24, fontWeight: 'bold'}}>Editar Perfil</Text>
                         <TextInput
                             style={styles.input}
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
 
     // btnsContainer
     btnsContainer: {
-        // marginTop: 100
+        marginBottom: 40,
         gap: 15,
     },
 

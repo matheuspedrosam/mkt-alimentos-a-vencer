@@ -54,7 +54,7 @@ export default function FirstLoadingScreen (props: FirstLoadingScreenProps) {
             console.log(e);
             router.replace('/Login/LoginScreen');
         } finally {
-            // router.replace('/Login/LoginScreen');
+            router.replace('/Login/LoginScreen');
         }
     }
 

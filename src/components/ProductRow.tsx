@@ -53,7 +53,7 @@ export function ProductRow (props: any) {
             <View style={styles.productRow}>
                     <View style={{flexDirection: 'row', gap: 10, alignItems: 'center'}}>
                         <View style={styles.productRowImgContainer}>
-                            <Image style={{ width: '100%', height: '100%' }} source={{uri: image}}/>
+                            <Image style={{ width: '100%', height: '100%', borderRadius: 5 }} source={{uri: image}}/>
                         </View>
                         <View style={styles.productRowDescriptionsContainer}>
                             <Text style={styles.productRowTitle}>
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         height: 75,
         width: 75,
-        padding: 10,
+        padding: 5,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',

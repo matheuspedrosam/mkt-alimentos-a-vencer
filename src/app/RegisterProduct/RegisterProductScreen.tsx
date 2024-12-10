@@ -55,10 +55,11 @@ export default function RegisterProductScreen (props: RegisterProductScreenProps
     })
 
     const onChange = (event: any, selectedDate: any) => {
-        const currentDate = selectedDate || date;
-        const adjustedDate = new Date(currentDate.getTime() + currentDate.getTimezoneOffset() * 60000);
-        setShow(Platform.OS === 'ios'); // No iOS, mantém o picker aberto
-        setDate(adjustedDate); // Atualiza a data selecionada
+        const currentDate = selectedDate;
+        console.log(selectedDate.setHours(0, 0, 0, 0));
+        console.log(currentDate);
+        setDate(currentDate);
+        setShow(false);
     };
 
     const showDatePicker = () => {
@@ -258,10 +259,10 @@ export default function RegisterProductScreen (props: RegisterProductScreenProps
                                     {show && (
                                         <DateTimePicker
                                             value={new Date(date)}
+                                            onPointerDownCapture={(e) => console.log(e)}
                                             mode="date"
-                                            display="default"
+                                            display="spinner"
                                             onChange={onChange}
-                                            timeZoneOffsetInMinutes={0}
                                         />
                                     )}
                                 </TouchableOpacity>

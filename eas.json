@@ -14,13 +14,7 @@
         "production": {
             "channel": "production",
             "environment": "production",
-            "autoIncrement": true,
-            "ios": {
-                "workflow": "managed"
-            },
-            "android": {
-                "workflow": "managed"
-            }
+            "autoIncrement": true
         }
     }
 }

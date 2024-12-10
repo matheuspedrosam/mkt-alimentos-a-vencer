@@ -1,0 +1,26 @@
+{
+    "cli": {
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "channel": "development",
+            "environment": "development"
+        },
+        "preview": {
+            "channel": "preview",
+            "environment": "preview"
+        },
+        "production": {
+            "channel": "production",
+            "environment": "production",
+            "autoIncrement": true,
+            "ios": {
+                "workflow": "managed"
+            },
+            "android": {
+                "workflow": "managed"
+            }
+        }
+    }
+}

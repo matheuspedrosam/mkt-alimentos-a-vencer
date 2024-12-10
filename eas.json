@@ -1,20 +1,20 @@
 {
-    "cli": {
-        "appVersionSource": "remote"
+  "cli": {
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "channel": "development",
+      "environment": "development"
     },
-    "build": {
-        "development": {
-            "channel": "development",
-            "environment": "development"
-        },
-        "preview": {
-            "channel": "preview",
-            "environment": "preview"
-        },
-        "production": {
-            "channel": "production",
-            "environment": "production",
-            "autoIncrement": true
-        }
+    "preview": {
+      "channel": "preview",
+      "environment": "preview"
+    },
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true
     }
+  }
 }

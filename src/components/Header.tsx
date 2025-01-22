@@ -21,9 +21,9 @@ export function Header (props: HeaderProps) {
                     <View style={styles.logoContainer}>
                         <Image style={{width: 50, height: 50}} source={require("../../assets/white-logo.png")} />
                         <View>
-                            <Text style={styles.headerTitle}>MKT ALIMENTOS</Text>
+                            <Text style={styles.headerTitle}>DESCONTO</Text>
                             <View style={styles.headerSubTitleContainer}>
-                                <Text style={styles.headerSubTitle}>A VENCER</Text>
+                                <Text style={styles.headerSubTitle}>SUSTENTÁVEL</Text>
                                 {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <Circle key={item} />)}
                             </View>
                         </View>

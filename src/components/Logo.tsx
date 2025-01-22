@@ -17,10 +17,10 @@ export function Logo (props: LogoProps) {
             <Image 
                 source={require('../../assets/red-logo.png')}
                 style={{width: logoWidth || 200, height: logoHeight || 200, margin: 'auto'}}/>
-            <Text style={{fontSize: titleFontSize || 32, fontWeight: 'bold'}}>MKT ALIMENTOS</Text>
+            <Text style={{fontSize: titleFontSize || 32, fontWeight: 'bold', textAlign: 'center'}}>DESCONTO</Text>
             <View style={styles.subtitleContainer}>
                 <View style={[styles.redCircle, {width: circleSize || 10, height: circleSize || 10}]}/>
-                <Text style={{fontSize: subTitleFontSize || 16}}>A VENCER</Text>
+                <Text style={{fontSize: subTitleFontSize || 16}}>SUSTENTÁVEL</Text>
                 <View style={[styles.redCircle, {width: circleSize || 10, height: circleSize || 10}]}/>
             </View>
         </View>

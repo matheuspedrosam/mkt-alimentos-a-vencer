@@ -46,7 +46,7 @@ export default function ProfileScreen (props: ProfileScreenProps) {
                                         {user.establishmentName || user.neighborhood}
                                     </Text>
                                 </View>
-                                <Text style={styles.userLocationAdress}>
+                                <Text style={styles.userLocationaddress}>
                                     {user.street}, {user.number || 's/n'} - {user.neighborhood}, {user.city} - {user.state}, {user.cep}
                                 </Text>
                             </View>
@@ -56,7 +56,7 @@ export default function ProfileScreen (props: ProfileScreenProps) {
                                 <Icon name='email' color={mainStyles.mainColors.primaryColor}/>
                                 <Text style={{color: mainStyles.mainColors.primaryColor, fontWeight: 'bold'}}>E-mail</Text>
                             </View>
-                            <Text style={styles.userLocationAdress}>
+                            <Text style={styles.userLocationaddress}>
                                 {user.email}
                             </Text>
                         </View>
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
         gap: 5,
         alignItems: 'center'
     },
-    userLocationAdress: {
+    userLocationaddress: {
         marginLeft: 30,
         color: 'gray',
     },

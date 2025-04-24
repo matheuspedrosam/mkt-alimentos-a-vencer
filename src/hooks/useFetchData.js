@@ -104,6 +104,9 @@ export default function useFetchData() {
 
     async function setData(collectionName, data) {
         try {
+            if (!collectionName) {
+                return;
+            }
             const dataCollection = collection(db, collectionName);
             const docRef = await addDoc(dataCollection, data);
             console.log("Documento adicionado com ID:", docRef.id);

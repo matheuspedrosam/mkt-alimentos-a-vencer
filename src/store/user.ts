@@ -18,7 +18,7 @@ type User = {
   neighborhood?: string,
   street?: string,
   number?: string,
-  adressGeocode?: GeoPoint,
+  addressGeocode?: GeoPoint,
   lastLocation?: {
     latitude: number,
     longitude: number,

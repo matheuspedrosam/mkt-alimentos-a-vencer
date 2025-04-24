@@ -164,10 +164,16 @@ export default function ClientHomeScreen(props: ClientHomeScreenProps) {
     }, [currentPage])
 
     function mapProductsWithRetailers(products: any, retailers: any){
-        return products.map((product: any) => {
-            const retailer = retailers.filter((doc: any) => doc.id === product.retailerId)[0];
-            return { ...product, retailer, retailerId: undefined }
+        products.forEach(p => console.log("ProdutoRID: " + p.retailerId));
+        retailers.forEach(r => console.log("RID: " + r.id));
+        // Carregue todos os retailers relacionados aos produtos
+
+        let maped = [];
+        products.forEach((product: any) => {
+            const retailer = retailers.filter((rt: any) => rt.id === product.retailerId)[0];
+            if(retailer) maped.push({...product, retailer: retailer, retailerId: undefined });
         })
+        return maped;
     }
 
     function handleDecrementPage(){

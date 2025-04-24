@@ -175,7 +175,7 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
                     number, 
                     complement, 
                     establishmentName,
-                    adressGeocode: null
+                    addressGeocode: null
                 }
 
                 const address = `${user.street}, ${user.number}, ${user.neighborhood}, ${user.city}, ${user.state}, ${user.cep}`;
@@ -184,7 +184,7 @@ export default function EditProfileScreen (props: EditProfileScreenProps) {
                 const geocode = await res.json();
                 const geometryLocation = geocode.results[0].geometry.location;
                 const { lat, lng } = geometryLocation;
-                userToUpdate.adressGeocode = new GeoPoint(lat, lng);
+                userToUpdate.addressGeocode = new GeoPoint(lat, lng);
             }
             await updateData("users", userToUpdate.id, userToUpdate);
             Alert.alert("Sucesso", "Perfil atualizado.");

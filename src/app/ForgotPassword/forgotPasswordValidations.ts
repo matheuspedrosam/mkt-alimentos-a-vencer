@@ -1,4 +1,5 @@
-import { collection, db, getDocs, query, where } from "../../firebase/config"
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 interface User {
     userType: string,

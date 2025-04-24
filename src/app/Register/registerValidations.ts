@@ -14,7 +14,7 @@ interface User {
     number?: string,
     complement?: string,
     establishmentName?: string,
-    adressGeocode?: GeoPoint
+    addressGeocode?: GeoPoint
 }
 
 export default function registerValidations(user: User){

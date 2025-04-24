@@ -50,7 +50,7 @@ export default function ProductSreen (props: ProductSreenProps) {
                                     { retailer.establishmentName || retailer.neighborhood }
                                 </Text>
                             </View>
-                            <Text style={styles.productLocationAdress}>
+                            <Text style={styles.productLocationaddress}>
                                 {retailer.street}, {retailer.number || 's/n'} - {retailer.neighborhood}, {retailer.city} - {retailer.state}, {retailer.cep}
                             </Text>
                         </View>
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
         gap: 5,
         alignItems: 'center'
     },
-    productLocationAdress: {
+    productLocationaddress: {
         marginLeft: 30,
         color: 'gray',
     },

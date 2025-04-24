@@ -109,13 +109,13 @@ export default function RegisterScreen (props: RegisterScreenProps) {
             number, 
             complement, 
             establishmentName,
-            adressGeocode: null
+            addressGeocode: null
         }
 
         if(userType == 'CLIENT'){
             delete user.cep; delete user.state; delete user.city;
             delete user.street; delete user.number; delete user.complement; delete user.establishmentName;
-            delete user.neighborhood; delete user.adressGeocode;
+            delete user.neighborhood; delete user.addressGeocode;
         }
 
         try{
@@ -128,7 +128,7 @@ export default function RegisterScreen (props: RegisterScreenProps) {
                 const geocode = await res.json();
                 const geometryLocation = geocode.results[0].geometry.location;
                 const { lat, lng } = geometryLocation;
-                user.adressGeocode = new GeoPoint(lat, lng);
+                user.addressGeocode = new GeoPoint(lat, lng);
             }
 
             createUserWithEmailAndPassword(auth, email, password)

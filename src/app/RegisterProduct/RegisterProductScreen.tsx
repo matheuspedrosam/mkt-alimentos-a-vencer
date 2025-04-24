@@ -191,6 +191,7 @@ export default function RegisterProductScreen (props: RegisterProductScreenProps
             // HandleSave
 
             try{
+                console.log(product);
                 await setData("products", product);
                 Alert.alert("Sucesso", "Produto adicionado.");
             } catch (error) {
